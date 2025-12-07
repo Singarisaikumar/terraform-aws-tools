@@ -1,5 +1,5 @@
 variable "zone_name" {
   type        = string
-  default     = "daws78s.online"
+  default     = "devopswithaws.store"
   description = "description"
 }

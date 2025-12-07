@@ -2,14 +2,15 @@ terraform {
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      version = "5.48.0"
+        version = "6.16.0"
     }
   }
   backend "s3" {
-    bucket = "daws78s-remote-state"
-    key    = "jenkins"
-    region = "us-east-1"
-    dynamodb_table = "daws78s-locking"
+    bucket       = "devopswithaws.store"
+    key          = "jenkins"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true
   }
 }
 

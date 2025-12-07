@@ -1,15 +1,17 @@
 module "jenkins" {
   source  = "terraform-aws-modules/ec2-instance/aws"
 
-  name = "jenkins-tf"
+  name = "jenkins"
 
   instance_type          = "t3.small"
-  vpc_security_group_ids = ["sg-0fea5e49e962e81c9"] #replace your SG
-  subnet_id = "subnet-0ea509ad4cba242d7" #replace your Subnet
-  ami = data.aws_ami.ami_info.id
-  user_data = file("jenkins.sh")
+  vpc_security_group_ids = ["sg-06507cfe4e2b0eaf2"] #replace your SG
+  subnet_id              = "subnet-0da0bf269651525a1" #replace your Subnet
+  ami                    = data.aws_ami.ami_info.id
+  associate_public_ip_address = true
+  user_data              = file("jenkins.sh")
+
   tags = {
-    Name = "jenkins-tf"
+    Name = "jenkins"
   }
 }
 
@@ -19,11 +21,14 @@ module "jenkins_agent" {
   name = "jenkins-agent"
 
   instance_type          = "t3.small"
-  vpc_security_group_ids = ["sg-0fea5e49e962e81c9"]
+  vpc_security_group_ids = ["sg-06507cfe4e2b0eaf2"]
   # convert StringList to list and get first element
-  subnet_id = "subnet-0ea509ad4cba242d7"
-  ami = data.aws_ami.ami_info.id
-  user_data = file("jenkins-agent.sh")
+  subnet_id              = "subnet-0da0bf269651525a1"
+
+  ami                    = data.aws_ami.ami_info.id
+  associate_public_ip_address = true
+  user_data              = file("jenkins-agent.sh")
+
   tags = {
     Name = "jenkins-agent"
   }
@@ -32,7 +37,7 @@ module "jenkins_agent" {
 resource "aws_key_pair" "tools" {
   key_name   = "tools"
   # you can paste the public key directly like this
-  #public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL6ONJth+DzeXbU3oGATxjVmoRjPepdl7sBuPzzQT2Nc sivak@BOOK-I6CR3LQ85Q"
+  #public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINYRVVrsbcrwl/Q/3/98x+WaK4MHgRHfigg/Y8+MPzCI saiku@DESKTOP-JQEH3PL"
   public_key = file("~/.ssh/tools.pub")
   # ~ means windows home directory
 }
@@ -42,18 +47,17 @@ module "nexus" {
 
   name = "nexus"
 
-  instance_type          = "t3.medium"
-  vpc_security_group_ids = ["sg-0fea5e49e962e81c9"]
+  instance_type          = "c7i-flex.large"
+  vpc_security_group_ids = ["sg-06507cfe4e2b0eaf2"]
   # convert StringList to list and get first element
-  subnet_id = "subnet-0ea509ad4cba242d7"
+  subnet_id = "subnet-0da0bf269651525a1"
   ami = data.aws_ami.nexus_ami_info.id
   key_name = aws_key_pair.tools.key_name
-  root_block_device = [
-    {
+  associate_public_ip_address = true
+  root_block_device = {
       volume_type = "gp3"
       volume_size = 30
     }
-  ]
   tags = {
     Name = "nexus"
   }
@@ -67,20 +71,20 @@ module "records" {
 
   records = [
     {
-      name    = "jenkins"
-      type    = "A"
-      ttl     = 1
-      records = [
-        module.jenkins.public_ip
-      ]
-      allow_overwrite = true
-    },
-    {
       name    = "jenkins-agent"
       type    = "A"
       ttl     = 1
       records = [
         module.jenkins_agent.private_ip
+      ]
+      allow_overwrite = true
+    },
+    {
+      name    = "jenkins"
+      type    = "A"
+      ttl     = 1
+      records = [
+        module.jenkins.public_ip
       ]
       allow_overwrite = true
     },
@@ -95,5 +99,5 @@ module "records" {
       allow_overwrite = true
     }
   ]
-
 }
+
